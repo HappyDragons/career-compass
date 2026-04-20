@@ -1,0 +1,16 @@
+{
+  "name": "career-compass",
+  "version": "1.0.0",
+  "description": "求职罗盘 - 大学生求职导航工具",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

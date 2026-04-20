@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>求职罗盘 - 大学生求职导航工具</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="auth-box">
+    <div class="auth-box__header">
+      <h2 class="auth-box__title" id="auth-title">登录</h2>
+      <p class="auth-box__desc">登录后可保存你的评估记录、面试练习和简历</p>
+    </div>
+    <form id="auth-form" autocomplete="off">
+      <div class="auth-box__field" id="auth-username-group">
+        <label>用户名</label>
+        <input type="text" id="auth-username" placeholder="输入用户名" required>
+      </div>
+      <div class="auth-box__field" id="auth-email-group" style="display:none">
+        <label>邮箱</label>
+        <input type="email" id="auth-email" placeholder="输入邮箱">
+      </div>
+      <div class="auth-box__field">
+        <label>密码</label>
+        <input type="password" id="auth-password" placeholder="输入密码" required>
+      </div>
+      <div class="auth-box__error" id="auth-error"></div>
+      <button type="submit" class="btn btn--primary btn--block" id="auth-submit-btn">登录</button>
+    </form>
+    <div class="auth-box__footer">
+      <span id="auth-switch-text">没有账号？</span>
+      <a href="#" id="auth-switch-link">立即注册</a>
+      <span class="auth-box__divider">|</span>
+      <a href="#" id="auth-skip-link">先体验一下</a>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header__content">
+    <div class="header__left">
+      <div class="header__logo">求职罗盘</div>
+      <div class="header__sub">大学生求职导航工具 · 从迷茫到清晰</div>
+    </div>
+    <div class="header__right" id="user-bar">
+      <span class="header__user" id="user-display" style="display:none">
+        <span class="header__avatar" id="user-avatar">U</span>
+        <span id="user-name"></span>
+      </span>
+      <button class="btn btn--sm btn--outline header__login-btn" id="login-btn" style="color:#fff;border-color:rgba(255,255,255,0.5)">登录</button>
+      <button class="btn btn--sm btn--outline header__logout-btn" id="logout-btn" style="display:none;color:#fff;border-color:rgba(255,255,255,0.5)">退出</button>
+    </div>
+  </div>
+  <div class="header__badge">公益赛道 · 大学生求职迷茫</div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav">
+  <div class="nav__inner">
+    <button class="nav__tab active" data-tab="sec-dashboard">数据看板</button>
+    <button class="nav__tab" data-tab="sec-profile">个人档案</button>
+    <button class="nav__tab" data-tab="sec-jd">JD翻译器</button>
+    <button class="nav__tab" data-tab="sec-skill">技能雷达</button>
+    <button class="nav__tab" data-tab="sec-plan">成长路线</button>
+    <button class="nav__tab" data-tab="sec-interview">模拟面试</button>
+    <button class="nav__tab" data-tab="sec-resume">简历优化</button>
+    <button class="nav__tab" data-tab="sec-history">历史记录</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- === DASHBOARD === -->
+  <section id="sec-dashboard" class="section active">
+    <h2 class="section__title">数据看板</h2>
+    <p class="section__desc">你的求职准备进度一览</p>
+
+    <div class="stats-grid" id="stats-cards">
+      <div class="stat-card">
+        <div class="stat-card__number" id="stat-skills">0</div>
+        <div class="stat-card__label">技能评估次数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__number" id="stat-interviews">0</div>
+        <div class="stat-card__label">面试练习题数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__number" id="stat-resumes">0</div>
+        <div class="stat-card__label">简历生成次数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__number" id="stat-jobs">0</div>
+        <div class="stat-card__label">探索岗位数</div>
+      </div>
+    </div>
+
+    <div class="card" id="dashboard-login-hint">
+      <p style="text-align:center;color:var(--text-secondary);padding:2rem 0">
+        <span style="font-size:2rem;display:block;margin-bottom:0.5rem">📊</span>
+        登录后可查看完整的学习数据和进度统计
+      </p>
+    </div>
+
+    <div id="dashboard-content" style="display:none">
+      <div class="card">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem">最近动态</h3>
+        <div id="recent-activity">
+          <p style="color:var(--text-secondary);font-size:0.9rem">暂无记录，开始使用各模块后这里会显示你的活动</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem">技能评估概览</h3>
+        <div id="skill-overview">
+          <p style="color:var(--text-secondary);font-size:0.9rem">完成技能评估后这里会显示各岗位的最新评分</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === PROFILE === -->
+  <section id="sec-profile" class="section">
+    <h2 class="section__title">个人档案</h2>
+    <p class="section__desc">完善你的信息，获取更精准的求职建议</p>
+
+    <div class="card" id="profile-login-hint">
+      <p style="text-align:center;color:var(--text-secondary);padding:2rem 0">
+        <span style="font-size:2rem;display:block;margin-bottom:0.5rem">👤</span>
+        登录后可编辑和保存个人档案
+      </p>
+    </div>
+
+    <div id="profile-form-wrap" style="display:none">
+      <div class="card">
+        <div class="resume-input-group">
+          <label>目标岗位</label>
+          <select class="select" id="profile-job" style="width:100%">
+            <option value="">-- 选择目标岗位 --</option>
+          </select>
+        </div>
+        <div class="resume-input-group">
+          <label>学校名称</label>
+          <input type="text" id="profile-university" placeholder="例如：北京大学">
+        </div>
+        <div class="resume-input-group">
+          <label>专业</label>
+          <input type="text" id="profile-major" placeholder="例如：计算机科学与技术">
+        </div>
+        <div class="resume-input-group">
+          <label>年级</label>
+          <select class="select" id="profile-grade" style="width:100%">
+            <option value="">-- 选择年级 --</option>
+            <option value="大一">大一</option>
+            <option value="大二">大二</option>
+            <option value="大三">大三</option>
+            <option value="大四">大四</option>
+            <option value="研究生">研究生</option>
+            <option value="已毕业">已毕业</option>
+          </select>
+        </div>
+        <div class="resume-input-group">
+          <label>个人简介</label>
+          <textarea id="profile-bio" rows="3" placeholder="简单介绍一下自己的背景和求职目标..."></textarea>
+        </div>
+        <button class="btn btn--primary" id="profile-save-btn">保存档案</button>
+        <span id="profile-msg" style="margin-left:1rem;font-size:0.9rem"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- === MODULE 1: JD TRANSLATOR === -->
+  <section id="sec-jd" class="section">
+    <h2 class="section__title">JD翻译器</h2>
+    <p class="section__desc">看不懂招聘描述？选一个岗位或粘贴JD，帮你翻译成大白话</p>
+
+    <div class="card">
+      <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem">选择一个你感兴趣的岗位：</p>
+      <div class="job-grid" id="jd-jobs"></div>
+      <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:0.5rem">或者，直接粘贴一段招聘JD：</p>
+      <textarea class="textarea" id="jd-input" placeholder="粘贴招聘描述到这里...&#10;&#10;例如：负责公司产品前端开发，要求熟练掌握React/Vue框架，具备良好的沟通能力..."></textarea>
+      <div style="margin-top:1rem">
+        <button class="btn btn--primary" id="jd-parse-btn">翻译这段JD</button>
+      </div>
+    </div>
+
+    <div id="jd-result" class="result"></div>
+  </section>
+
+  <!-- === MODULE 2: SKILL GAP ANALYZER === -->
+  <section id="sec-skill" class="section">
+    <h2 class="section__title">技能雷达</h2>
+    <p class="section__desc">选择目标岗位，评估你的技能水平，看看和岗位要求差多少</p>
+
+    <div class="card">
+      <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem">选择目标岗位：</p>
+      <div class="job-grid" id="skill-jobs"></div>
+    </div>
+
+    <div id="skill-panel" class="card" style="display:none">
+      <div class="radar-section">
+        <div class="radar-chart">
+          <canvas id="radar-canvas" width="400" height="400" style="max-width:100%;height:auto"></canvas>
+        </div>
+        <div class="radar-controls" id="skill-controls"></div>
+      </div>
+      <div style="margin-top:1rem;text-align:right">
+        <button class="btn btn--sm btn--outline" id="skill-save-btn" style="display:none">保存本次评估</button>
+        <span id="skill-save-msg" style="margin-left:0.5rem;font-size:0.85rem"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- === MODULE 3: ACTION PLAN === -->
+  <section id="sec-plan" class="section">
+    <h2 class="section__title">成长路线</h2>
+    <p class="section__desc">选择你想走的方向，获取从大一到大四的完整准备路线</p>
+
+    <div class="card">
+      <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem">选择目标岗位：</p>
+      <div class="job-grid" id="plan-jobs"></div>
+    </div>
+
+    <div id="plan-content" class="card" style="display:none"></div>
+  </section>
+
+  <!-- === MODULE 4: MOCK INTERVIEW === -->
+  <section id="sec-interview" class="section">
+    <h2 class="section__title">模拟面试</h2>
+    <p class="section__desc">选择岗位，练习常见面试题，获取即时反馈</p>
+
+    <div class="card">
+      <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem">选择目标岗位：</p>
+      <div class="job-grid" id="interview-jobs"></div>
+    </div>
+
+    <div id="interview-content" style="display:none"></div>
+  </section>
+
+  <!-- === MODULE 5: RESUME HELPER === -->
+  <section id="sec-resume" class="section">
+    <h2 class="section__title">简历优化</h2>
+    <p class="section__desc">用STAR法则，把你的经历变成有说服力的简历表述</p>
+
+    <div class="card">
+      <div class="resume-input-group">
+        <label for="resume-type">经历类型</label>
+        <select class="select" id="resume-type">
+          <option value="general">通用经历</option>
+          <option value="tech">技术项目</option>
+          <option value="product">产品/运营</option>
+          <option value="design">设计项目</option>
+          <option value="ops">运营活动</option>
+        </select>
+      </div>
+      <div class="resume-input-group">
+        <label for="resume-situation">S - 情境 (Situation)</label>
+        <textarea id="resume-situation" rows="2" placeholder="什么背景下做的？例如：校园电商平台、暑期实习期间、百人规模社团"></textarea>
+      </div>
+      <div class="resume-input-group">
+        <label for="resume-task">T - 任务 (Task)</label>
+        <textarea id="resume-task" rows="2" placeholder="你负责什么？例如：首页改版设计、用户增长策略、数据库优化"></textarea>
+      </div>
+      <div class="resume-input-group">
+        <label for="resume-action">A - 行动 (Action)</label>
+        <textarea id="resume-action" rows="2" placeholder="具体做了什么？例如：重新设计了信息架构、搭建了数据埋点体系"></textarea>
+      </div>
+      <div class="resume-input-group">
+        <label for="resume-result">R - 结果 (Result)</label>
+        <textarea id="resume-result" rows="2" placeholder="成果是什么？用数据说话！例如：转化率提升30%、DAU增长2000+"></textarea>
+      </div>
+      <button class="btn btn--primary btn--block" id="resume-gen-btn">生成简历表述</button>
+    </div>
+
+    <div id="resume-output"></div>
+  </section>
+
+  <!-- === HISTORY === -->
+  <section id="sec-history" class="section">
+    <h2 class="section__title">历史记录</h2>
+    <p class="section__desc">查看你保存的所有评估、面试练习和简历记录</p>
+
+    <div class="card" id="history-login-hint">
+      <p style="text-align:center;color:var(--text-secondary);padding:2rem 0">
+        <span style="font-size:2rem;display:block;margin-bottom:0.5rem">📁</span>
+        登录后可查看历史记录
+      </p>
+    </div>
+
+    <div id="history-content" style="display:none">
+      <div class="history-tabs">
+        <button class="btn btn--sm btn--primary history-tab active" data-htab="h-skills">技能评估</button>
+        <button class="btn btn--sm btn--outline history-tab" data-htab="h-interviews">面试练习</button>
+        <button class="btn btn--sm btn--outline history-tab" data-htab="h-resumes">简历记录</button>
+      </div>
+
+      <div id="h-skills" class="history-panel active">
+        <div id="history-skills-list"><p style="color:var(--text-secondary);font-size:0.9rem;padding:1rem 0">暂无记录</p></div>
+      </div>
+      <div id="h-interviews" class="history-panel">
+        <div id="history-interviews-list"><p style="color:var(--text-secondary);font-size:0.9rem;padding:1rem 0">暂无记录</p></div>
+      </div>
+      <div id="h-resumes" class="history-panel">
+        <div id="history-resumes-list"><p style="color:var(--text-secondary);font-size:0.9rem;padding:1rem 0">暂无记录</p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>求职罗盘 · 大学生求职导航工具</p>
+  <p style="margin-top:0.3rem">TRAE SOLO 挑战赛 · 公益赛道作品</p>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
