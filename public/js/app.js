@@ -27,6 +27,14 @@
 
   function isLoggedIn() { return !!currentUser; }
 
+  // === XSS PROTECTION ===
+  function esc(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
   // === INIT ===
   function init() {
     bindTabs();
@@ -628,9 +636,9 @@
       var v2 = verbs[Math.floor(Math.random() * verbs.length)];
 
       var bullets = [
-        v1 + situation + '项目中的' + task + '工作，' + action + '，最终' + result,
-        '在' + situation + '中' + v1 + task + '，通过' + action + '，' + result,
-        v2 + task + '（' + situation + '），采用' + action + '的方式，达成' + result + '的效果'
+        v1 + esc(situation) + '项目中的' + esc(task) + '工作，' + esc(action) + '，最终' + esc(result),
+        '在' + esc(situation) + '中' + v1 + esc(task) + '，通过' + esc(action) + '，' + esc(result),
+        v2 + esc(task) + '（' + esc(situation) + '），采用' + esc(action) + '的方式，达成' + esc(result) + '的效果'
       ];
 
       output.innerHTML = '<div class="resume-output"><p style="font-weight:600;margin-bottom:0.5rem">STAR法则优化后的简历表述：</p>' +
@@ -649,11 +657,26 @@
   window.copyResume = function () {
     var items = document.querySelectorAll('.resume-output__item');
     var text = Array.from(items).map(function (el) { return el.textContent; }).join('\n');
-    navigator.clipboard.writeText(text).then(function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onCopied).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+    function onCopied() {
       var el = document.querySelector('.resume-output__copy');
       el.textContent = '✅ 已复制到剪贴板';
       setTimeout(function () { el.textContent = '📋 点击复制全部'; }, 2000);
-    });
+    }
+    function fallbackCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); onCopied(); } catch (e) { alert('复制失败，请手动复制'); }
+      document.body.removeChild(ta);
+    }
   };
 
   window.saveResume = function () {
@@ -770,7 +793,7 @@
           Object.values(r.scores).forEach(function (v) { avg += v; cnt++; });
           avg = cnt > 0 ? Math.round(avg / cnt) : 0;
           return '<div class="history-item"><div class="history-item__info">' +
-            '<div class="history-item__title">' + r.job_title + ' · 平均 ' + avg + '分</div>' +
+            '<div class="history-item__title">' + esc(r.job_title) + ' · 平均 ' + avg + '分</div>' +
             '<div class="history-item__meta">' + new Date(r.created_at + 'Z').toLocaleString('zh-CN') + '</div>' +
             '</div><div class="history-item__actions">' +
             '<button class="btn btn--sm btn--outline" onclick="deleteSkill(' + r.id + ')">删除</button>' +
@@ -786,8 +809,10 @@
       if (data.records && data.records.length > 0) {
         el.innerHTML = data.records.map(function (r) {
           return '<div class="history-item"><div class="history-item__info">' +
-            '<div class="history-item__title">' + r.job_title + ' · Q: ' + (r.question_text || '').substring(0, 30) + '...</div>' +
+            '<div class="history-item__title">' + esc(r.job_title) + ' · Q: ' + esc((r.question_text || '').substring(0, 30)) + '...</div>' +
             '<div class="history-item__meta">得分：' + r.score + '/100 · ' + new Date(r.created_at + 'Z').toLocaleString('zh-CN') + '</div>' +
+            '</div><div class="history-item__actions">' +
+            '<button class="btn btn--sm btn--outline" onclick="deleteInterview(' + r.id + ')">删除</button>' +
             '</div></div>';
         }).join('');
       } else {
@@ -800,7 +825,7 @@
       if (data.records && data.records.length > 0) {
         el.innerHTML = data.records.map(function (r) {
           return '<div class="history-item"><div class="history-item__info">' +
-            '<div class="history-item__title">' + r.type + ' · ' + r.situation.substring(0, 20) + '...</div>' +
+            '<div class="history-item__title">' + esc(r.type) + ' · ' + esc(r.situation.substring(0, 20)) + '...</div>' +
             '<div class="history-item__meta">' + new Date(r.created_at + 'Z').toLocaleString('zh-CN') + '</div>' +
             '</div><div class="history-item__actions">' +
             '<button class="btn btn--sm btn--outline" onclick="deleteResume(' + r.id + ')">删除</button>' +
@@ -815,6 +840,11 @@
   window.deleteSkill = function (id) {
     if (!confirm('确定删除这条记录？')) return;
     api('DELETE', '/skill/' + id).then(function () { loadHistory(); }).catch(function () {});
+  };
+
+  window.deleteInterview = function (id) {
+    if (!confirm('确定删除这条记录？')) return;
+    api('DELETE', '/interview/' + id).then(function () { loadHistory(); }).catch(function () {});
   };
 
   window.deleteResume = function (id) {

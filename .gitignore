@@ -1,3 +1,14 @@
 node_modules/
 *.db
 .env
+.env.local
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+.vscode/
+coverage/
+dist/
+build/
+*.db-shm
+*.db-wal

@@ -1,12 +1,21 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'career_compass.db');
+const DB_PATH = path.join(__dirname, '..', 'career_compass.db');
+
+let _db = null;
+
+function getDB() {
+  if (!_db) {
+    _db = new Database(DB_PATH);
+    _db.pragma('journal_mode = WAL');
+    _db.pragma('foreign_keys = ON');
+  }
+  return _db;
+}
 
 function initDB() {
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
+  const db = getDB();
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -75,13 +84,30 @@ function initDB() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    -- Indexes for query performance
+    CREATE INDEX IF NOT EXISTS idx_skill_user ON skill_assessments(user_id);
+    CREATE INDEX IF NOT EXISTS idx_skill_user_job ON skill_assessments(user_id, job_id);
+    CREATE INDEX IF NOT EXISTS idx_interview_user ON interview_records(user_id);
+    CREATE INDEX IF NOT EXISTS idx_interview_user_job ON interview_records(user_id, job_id);
+    CREATE INDEX IF NOT EXISTS idx_resume_user ON resumes(user_id);
+    CREATE INDEX IF NOT EXISTS idx_login_user ON login_logs(user_id);
   `);
 
   return db;
 }
 
-function getDB() {
-  return new Database(DB_PATH);
+function safeJsonParse(str, fallback) {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return fallback !== undefined ? fallback : {};
+  }
 }
 
-module.exports = { initDB, getDB };
+// Graceful shutdown
+process.on('exit', () => {
+  if (_db) { try { _db.close(); } catch (e) {} }
+});
+
+module.exports = { initDB, getDB, safeJsonParse };

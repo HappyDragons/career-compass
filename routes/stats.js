@@ -1,35 +1,26 @@
 const express = require('express');
-const { getDB } = require('../db/init');
+const { getDB, safeJsonParse } = require('../db/init');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
 // GET /api/stats - Dashboard statistics for current user
 router.get('/', authMiddleware, (req, res) => {
-  const db = getDB();
   try {
+    const db = getDB();
     const userId = req.user.id;
 
-    // Total skill assessments
     const skillCount = db.prepare('SELECT COUNT(*) as count FROM skill_assessments WHERE user_id = ?').get(userId).count;
-
-    // Total interview practice answers
     const interviewCount = db.prepare('SELECT COUNT(*) as count FROM interview_records WHERE user_id = ?').get(userId).count;
-
-    // Total resumes generated
     const resumeCount = db.prepare('SELECT COUNT(*) as count FROM resumes WHERE user_id = ?').get(userId).count;
-
-    // Unique jobs assessed
     const jobsExplored = db.prepare('SELECT COUNT(DISTINCT job_id) as count FROM skill_assessments WHERE user_id = ?').get(userId).count;
 
-    // Interview score trend (last 10)
     const interviewScores = db.prepare(`
       SELECT score, job_title, question_text, created_at
       FROM interview_records WHERE user_id = ? AND score > 0
       ORDER BY created_at DESC LIMIT 10
     `).all(userId);
 
-    // Skill assessment history (latest per job)
     const skillHistory = db.prepare(`
       SELECT sa.* FROM skill_assessments sa
       INNER JOIN (
@@ -40,9 +31,8 @@ router.get('/', authMiddleware, (req, res) => {
       WHERE sa.user_id = ?
       ORDER BY sa.created_at DESC
     `).all(userId, userId);
-    skillHistory.forEach(r => { r.scores = JSON.parse(r.scores); });
+    skillHistory.forEach(r => { r.scores = safeJsonParse(r.scores, {}); });
 
-    // Recent activity (last 10 actions across all tables)
     const recentActivity = db.prepare(`
       SELECT '技能评估' as type, job_title as title, created_at FROM skill_assessments WHERE user_id = ?
       UNION ALL
@@ -52,28 +42,20 @@ router.get('/', authMiddleware, (req, res) => {
       ORDER BY created_at DESC LIMIT 10
     `).all(userId, userId, userId);
 
-    // Login count
     const loginCount = db.prepare('SELECT COUNT(*) as count FROM login_logs WHERE user_id = ?').get(userId).count;
 
-    // Days since registration
     const user = db.prepare('SELECT created_at FROM users WHERE id = ?').get(userId);
     const daysSinceReg = user ? Math.floor((Date.now() - new Date(user.created_at + 'Z').getTime()) / 86400000) : 0;
 
     res.json({
-      overview: {
-        skillCount,
-        interviewCount,
-        resumeCount,
-        jobsExplored,
-        loginCount,
-        daysSinceReg
-      },
+      overview: { skillCount, interviewCount, resumeCount, jobsExplored, loginCount, daysSinceReg },
       interviewScores,
       skillHistory,
       recentActivity
     });
-  } finally {
-    db.close();
+  } catch (err) {
+    console.error('Stats error:', err.message);
+    res.status(500).json({ error: '获取统计数据失败' });
   }
 });
 
